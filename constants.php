@@ -2,6 +2,10 @@
 
 const REQUIRED_STR = 'required';
 const NULLABLE_STR = 'nullable';
+const STATUS_TODO = "todo";
+const STATUS_IN_PROGRESS = "in-progress";
+const STATUS_DONE = "done";
+const FILENAME = "tasks.json";
 
 const COMMANDS_AND_ARGUMENTS = [
     'add' => [
@@ -22,17 +26,12 @@ const COMMANDS_AND_ARGUMENTS = [
     ],
     'list' => [
         'status' => NULLABLE_STR
-    ],
-    'my_command' => [
-        'id' => REQUIRED_STR,
-        'description' => REQUIRED_STR,
-        'status' => NULLABLE_STR,
-    ],
+    ]
 ];
 
 const STATUSES = [
-    'todo',
-    'in_progress',
-    'done'
+    STATUS_TODO,
+    STATUS_IN_PROGRESS,
+    STATUS_DONE
 ];
 
