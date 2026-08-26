@@ -90,22 +90,22 @@ function handle_command(string $command): void
 
 function handleAddCommand($commandStructure): void
 {
-    $description = $commandStructure['description'];
+    $description = $commandStructure[ARG_DESCRIPTION];
 
     $content = getFileContent();
     $contentArr = json_decode($content, true);
-    $count = $contentArr['count'];
+    $lastId = $contentArr['last_id'];
 
     $data = [
-        'id' => $count + 1,
-        'description' => $description,
-        'status' => STATUS_TODO,
-        'created_at' => time(),
-        'updated_at' => null,
+        ARG_ID => $lastId + 1,
+        ARG_DESCRIPTION => $description,
+        ARG_STATUS => STATUS_TODO,
+        ARG_CREATED_AT => time(),
+        ARG_UPDATED_AT => null,
     ];
 
     $contentArr['tasks'][] = $data;
-    $contentArr['count'] = $count + 1;
+    $contentArr['last_id'] = $lastId + 1;
     $fpc = file_put_contents(FILENAME, json_encode($contentArr));
     if(empty($fpc)){
         throw new \RuntimeException("Somethings went wrong!");
@@ -117,14 +117,14 @@ function handleListCommand($commandStructure): void
     $content = getFileContent();
     $content = json_decode($content, true);
     $tasks = $content['tasks'];
-    $status = $commandStructure['status'];
+    $status = $commandStructure[ARG_STATUS];
 
     if($status !== null) {
         if(!in_array($status, STATUSES)) {
             $validStatusesStr = implode(',', STATUSES);
             throw new \InvalidArgumentException("Invalid status, valid statuses are:\n{$validStatusesStr}");
         }
-        $tasks = array_filter($tasks, fn($task) => $task['status'] === $status);
+        $tasks = array_filter($tasks, fn($task) => $task[ARG_STATUS] === $status);
     }
 
     if(empty($tasks)) {
@@ -134,13 +134,13 @@ function handleListCommand($commandStructure): void
 
     foreach($tasks as $task)
     {
-        $id = (int) $task['id'];
-        $description = (string) $task['description'];
-        $status = (string) $task['status'];
-        $createdTimestamp = (int) $task['created_at'];
-        $updatedTimestamp = (int) $task['updated_at'];
+        $id = (int) $task[ARG_ID];
+        $description = (string) $task[ARG_DESCRIPTION];
+        $status = (string) $task[ARG_STATUS];
+        $createdTimestamp = (int) $task[ARG_CREATED_AT];
+        $updatedTimestamp = (int) $task[ARG_UPDATED_AT];
         $createdDate = (new DateTime())->setTimestamp($createdTimestamp)->format(DATE_ISO8601_EXPANDED);
-        $updatedDate = $task['updated_at'] ? (new DateTime())->setTimestamp($updatedTimestamp)->format(DATE_ISO8601_EXPANDED) : null;
+        $updatedDate = $task[ARG_UPDATED_AT] ? (new DateTime())->setTimestamp($updatedTimestamp)->format(DATE_ISO8601_EXPANDED) : null;
 
         echo "---------------\n";
         echo "TASK #{$id}\n";
@@ -163,8 +163,8 @@ function handleMarkInProgressCommand($commandStructure): void
     $contentArr = json_decode($content, true);
     $tasks = $contentArr['tasks'];
 
-    $tasks[$taskIndex]['status'] = STATUS_IN_PROGRESS;
-    $tasks[$taskIndex]['updated_at'] = time();
+    $tasks[$taskIndex][ARG_STATUS] = STATUS_IN_PROGRESS;
+    $tasks[$taskIndex][ARG_UPDATED_AT] = time();
 
     $contentArr['tasks'] = $tasks;
     file_put_contents(FILENAME, json_encode($contentArr));
@@ -182,8 +182,8 @@ function handleMarkDoneCommand($commandStructure): void
     $contentArr = json_decode($content, true);
     $tasks = $contentArr['tasks'];
 
-    $tasks[$taskIndex]['status'] = STATUS_DONE;
-    $tasks[$taskIndex]['updated_at'] = time();
+    $tasks[$taskIndex][ARG_STATUS] = STATUS_DONE;
+    $tasks[$taskIndex][ARG_UPDATED_AT] = time();
 
     $contentArr['tasks'] = $tasks;
     file_put_contents(FILENAME, json_encode($contentArr));
@@ -199,10 +199,8 @@ function handleDeleteCommand($commandStructure): void
 
     $content = getFileContent();
     $contentArr = json_decode($content, true);
-    $count = $contentArr['count'];
 
     unset($contentArr['tasks'][$taskIndex]);
-    $contentArr['count'] = $count - 1;
 
     file_put_contents(FILENAME, json_encode($contentArr));
 }
@@ -210,7 +208,7 @@ function handleDeleteCommand($commandStructure): void
 function handleUpdateCommand($args): void
 {
     $id = (int) $args['id'];
-    $description = (string) $args['description'];
+    $description = (string) $args[ARG_DESCRIPTION];
 
     $taskIndex = getTaskIndex($id);
     if($taskIndex === null) {
@@ -221,8 +219,8 @@ function handleUpdateCommand($args): void
     $contentArr = json_decode($content, true);
     $tasks = $contentArr['tasks'];
 
-    $tasks[$taskIndex]['description'] = $description;
-    $tasks[$taskIndex]['updated_at'] = time();
+    $tasks[$taskIndex][ARG_DESCRIPTION] = $description;
+    $tasks[$taskIndex][ARG_UPDATED_AT] = time();
 
     $contentArr['tasks'] = $tasks;
     file_put_contents(FILENAME, json_encode($contentArr));
@@ -248,7 +246,7 @@ function getFileContent(): string
     $fileName = FILENAME;
     if(!file_exists($fileName))
     {
-        $defaultData = ["tasks" => [], "count" => 0];
+        $defaultData = ["tasks" => [], "last_id" => 0];
         $fpc = file_put_contents($fileName, json_encode($defaultData), FILE_APPEND);
         if($fpc === false) {
             throw new \RuntimeException("Somethings went wrong while file created.}");
